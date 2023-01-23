@@ -49,7 +49,7 @@ class Staker(object):
         return tickets
 
 def getFile (filename):
-    url = '/home/sol/luckyBot/' + filename
+    url = '/home/sol/luckyBot/snapshots/' + filename
     try:
         with open(url, "r") as epochfile:
             result = json.load(epochfile)
@@ -61,7 +61,7 @@ def getFile (filename):
 def setFile(filename, data):
     result = {}
     result['result'] = data
-    url = '/home/sol/luckyBot/' + filename
+    url = '/home/sol/luckyBot/snapshots/' + filename
     try:
         with open(url, "w") as epochfile:
             json.dump(result, epochfile)
@@ -103,7 +103,7 @@ def getEpoch():
         return 0
 
 def copyDB():
-    process = subprocess.Popen(shlex.split('cp /home/sol/luckyBot/stats.json /home/bot/db.json'),
+    process = subprocess.Popen(shlex.split('cp /home/sol/luckyBot/snapshots/stats.json /home/bot/db.json'),
                         stdout=subprocess.PIPE, 
                         stderr=subprocess.PIPE)
     stdout, stderr = process.communicate()
