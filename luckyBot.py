@@ -136,7 +136,6 @@ def getLucky(epoch):
 
     for i in range(epoch - EPOCH_CAP - 1, epoch + 1):
         stakers = getFile('%s.json' % i)
-        stakers = false
         if stakers:
             for value in stakers :
                 value = Staker(value)
@@ -144,7 +143,6 @@ def getLucky(epoch):
                 totalStake += int((value.activeStake + value.rentExemptReserve) / 10**9)
                 totalTickets += tickets
                 stakersWithTickets.append(value.__dict__)
-
     slotReward = getSlotReward(epoch)
     print(slotReward, epoch)
     slotHash = getSlot(slotReward['slot'])['blockhash']
@@ -189,7 +187,7 @@ if __name__ == "__main__":
 
                 # Update stats file
                 Newstats = getStats(epochInfo, stakers)
-
+                print(epoch_stats[-1]['epoch'])
                 # Draw lucky Staker
                 lucky = getLucky(epoch_stats[-1]['epoch'])
 
@@ -199,7 +197,6 @@ if __name__ == "__main__":
                 if len(epoch_stats[-2]['lucky'])>2:
                     firstBlock = epoch_stats[-2]['lucky']['slotReward']
                     lastBlock = epoch_stats[-1]['lastSlot']
-                    print(firstBlock, lastBlock)
                     firstTime = getSlot(firstBlock)['blockTime']
                     lastTime = getSlot(lastBlock)['blockTime']
                     slotTimeInSec = lastTime - firstTime
@@ -230,7 +227,6 @@ if __name__ == "__main__":
 
                 # Copy to JSON-server
                 copyDB()
-                print('TRANSERT SOL',lucky['staker'], lucky['lamport']/10**9)
 
 
             else:
