@@ -8,6 +8,7 @@ import shlex
 
 RPC_URL = 'https://api.mainnet-beta.solana.com'
 VOTE_PUBKEY = 'Luck3DN3HhkV6oc7rPQ1hYGgU3b5AhdKW9o1ob6AyU9'
+COMMUNITY_WALLET = ''
 
 TICKETS_CAP = 5000
 EPOCH_CAP = 12
@@ -15,6 +16,8 @@ EPOCH_CAP = 12
 POOLS = ["6iQKfEyhr3bZMotVkW6beNZz5CPAkiwvgV2CTje9pVSS", # Jito
          "4bZ6o3eUUNXhKuqjdCnCoPAoLgWiuLYixKaxoa8PpiKk", # Marinade
          "mpa4abUkjQoAvPzREkh5Mo75hZhPFQ2FSH6w7dWKuQ5",  # Solana Foundation
+         "HbJTxftxnXgpePCshA8FubsRj9MW4kfPscfuUfn44fnt", #JPool
+         "6WecYymEARvjG5ZyqkrVQ6YkhPfujNzWpSPwNKXHCbV2", #BlazeStake
         ]
 
 
@@ -102,12 +105,27 @@ def getEpoch():
     except:
         return 0
 
+def transferSol(destination, lamports, epoch):
+    amount = int(lamports) / 10**9
+    process = subprocess.Popen(shlex.split('ts-node /home/sol/transferBot/src/transferBot.ts --type transfer --destination %s --amount %s --epoch %s' % (destination, amount, epoch)),
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE)
+    stdout, stderr = process.communicate()
+    return stdout
+
+def burnBonk(lamports, epoch):
+    amount = int(lamports) / 10**9
+    process = subprocess.Popen(shlex.split('ts-node /home/sol/transferBot/src/transferBot.ts --type burn --amount %s --epoch %s' % (amount, epoch)),
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE)
+    stdout, stderr = process.communicate()
+    return stdout
+
 def copyDB():
     process = subprocess.Popen(shlex.split('cp /home/sol/luckyBot/snapshots/stats.json /home/bot/db.json'),
                         stdout=subprocess.PIPE, 
                         stderr=subprocess.PIPE)
     stdout, stderr = process.communicate()
-    print(stdout)
     return stdout
 
 def getStakes():
@@ -151,7 +169,7 @@ def getLucky(epoch):
 
     for value in stakersWithTickets :
         if value['tickets'][0] <= lucky and value['tickets'][1] >= lucky:
-            luckyStaker = {"epoch":epoch, "slotReward":slotReward['slot'], "totalReward":slotReward['rewardLamports'], "luckyTicket":lucky, "totalTickets":totalTickets, "lamport":int(slotReward['rewardLamports']/3),"staker":value['staker'],"luckyTx":"pending"}
+            luckyStaker = {"epoch":epoch, "slotReward":slotReward['slot'], "totalReward":slotReward['rewardLamports'], "luckyTicket":lucky, "totalTickets":totalTickets, "lamport":int(slotReward['rewardLamports']/3),"staker":value['staker'],"luckyTx":"pending", "communityTx":"pending"}
     return luckyStaker
 
 def getStats(epochInfo, stakers):
@@ -185,7 +203,7 @@ if __name__ == "__main__":
                 # getStakes for new Epoch
                 stakers = getStakes()
 
-                # Update stats file
+                # Update stats
                 Newstats = getStats(epochInfo, stakers)
                 print(epoch_stats[-1]['epoch'])
                 # Draw lucky Staker
@@ -219,15 +237,21 @@ if __name__ == "__main__":
                 setFile('%s.json' % epoch, list)
 
                 #### TRANSFERT TO WINNER
-                # ToDo
+                epoch_stats = getFile("stats.json") # Update stats file
+                #txid_1 = transferSol(epoch_stats[-2]['lucky']['staker'], epoch_stats[-2]['lucky']['lamport'], epoch_stats[-2]['lucky']['epoch'])
+
+                if int(epoch_stats[-2]['lucky']['epoch']) <= 410:
+                  txid_2 = burnBonk(epoch_stats[-2]['lucky']['lamport'], epoch_stats[-2]['lucky']['epoch'])
+                else:
+                  txid_2 = transferSol(COMMUNITY_WALLET, epoch_stats[-2]['lucky']['lamport'], epoch_stats[-2]['lucky']['epoch'])
 
                 # Log result
-                #epoch_stats[-2]['lucky']['luckyTx'] = txId
-                #setFile("stats.json", epoch_stats)
+                epoch_stats[-2]['lucky']['luckyTx'] = txid_1
+                epoch_stats[-2]['lucky']['communityTx'] = txid_2
+                setFile("stats.json", epoch_stats)
 
                 # Copy to JSON-server
                 copyDB()
-
 
             else:
                 #EPOCH EXIST
@@ -244,15 +268,8 @@ if __name__ == "__main__":
                 epoch_stats[-1] = Newstats
                 setFile("stats.json", epoch_stats)
 
-
                 copyDB()
             time.sleep(60*5)
         except:
-            # Stats file exist ? Else create stats file
-            if not epoch_stats:
-                stakers = getStakes()
-                stats = getStats(epochInfo, stakers)
-                setFile("stats.json", [stats])
-                epoch_stats = getFile("stats.json")
             print('error')
             time.sleep(15)
