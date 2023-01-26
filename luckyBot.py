@@ -238,7 +238,7 @@ if __name__ == "__main__":
 
                 #### TRANSFERT TO WINNER
                 epoch_stats = getFile("stats.json") # Update stats file
-                #txid_1 = transferSol(epoch_stats[-2]['lucky']['staker'], epoch_stats[-2]['lucky']['lamport'], epoch_stats[-2]['lucky']['epoch'])
+                txid_1 = transferSol(epoch_stats[-2]['lucky']['staker'], epoch_stats[-2]['lucky']['lamport'], epoch_stats[-2]['lucky']['epoch'])
 
                 if int(epoch_stats[-2]['lucky']['epoch']) <= 410:
                   txid_2 = burnBonk(epoch_stats[-2]['lucky']['lamport'], epoch_stats[-2]['lucky']['epoch'])
