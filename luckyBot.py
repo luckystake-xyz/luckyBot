@@ -277,7 +277,7 @@ if __name__ == "__main__":
                 # Copy to JSON-server
                 copyDB()
 
-            else if epochProgress < 0.995:
+            elif epochProgress < 0.995:
                 #EPOCH EXIST
                 stakers = getStakes()
 
