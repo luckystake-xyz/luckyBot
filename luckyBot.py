@@ -37,8 +37,8 @@ class Staker(object):
         self.rentExemptReserve += stakeAccount['rentExemptReserve'] if stakeAccount.get('rentExemptReserve') else 0
 
     def createTickets(self):
-        if self.staker not in POOLS:
-            amountInSol = (self.activeStake + self.rentExemptReserve) / 10**9
+        amountInSol = (self.activeStake + self.rentExemptReserve) / 10**9
+        if self.staker not in POOLS and amountInSol >= 1:
             if amountInSol < TICKETS_CAP:
                 tickets = amountInSol
             else:
@@ -111,7 +111,7 @@ def transferSol(destination, lamports, epoch):
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE)
     stdout, stderr = process.communicate()
-    return stdout
+    return stdout.decode('utf8')
 
 def burnBonk(lamports, epoch):
     amount = int(lamports) / 10**9
@@ -119,7 +119,7 @@ def burnBonk(lamports, epoch):
                         stdout=subprocess.PIPE,
                         stderr=subprocess.PIPE)
     stdout, stderr = process.communicate()
-    return stdout
+    return stdout.decode('utf8')
 
 def copyDB():
     process = subprocess.Popen(shlex.split('cp /home/sol/luckyBot/snapshots/stats.json /home/bot/db.json'),
@@ -143,6 +143,22 @@ def getStakes():
             stakers[stake['staker']].add_stake(stake)
         else:
             stakers[stake['staker']] = Staker(stake)
+
+    # Add SolBlaze Stakers
+    try:
+        headers = {'Content-Type': 'application/json'}
+        r = requests.post("https://stake.solblaze.org/api/v1/cls_applied_validator_stake?validator=Luck3DN3HhkV6oc7rPQ1hYGgU3b5AhdKW9o1ob6AyU9", headers=headers)
+        b = r.json()
+        for key, value in b['applied_stakes'].items():
+            bStaker = {}
+            bStaker['staker'] = key
+            bStaker['activeStake'] = int(value * 10**9)
+            if bStaker['staker'] in stakers:
+                stakers[bStaker['staker']].add_stake(stake)
+            else:
+                stakers[bStaker['staker']] = Staker(bStaker)
+    except:
+        print('SolBlaze fetch error')
 
     stakers = collections.OrderedDict(sorted(stakers.items()))
     return stakers
