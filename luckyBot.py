@@ -36,8 +36,11 @@ class Staker(object):
         self.deactivatingStake += stakeAccount['deactivatingStake'] if stakeAccount.get('deactivatingStake') else 0
         self.rentExemptReserve += stakeAccount['rentExemptReserve'] if stakeAccount.get('rentExemptReserve') else 0
 
+    def remove_stake(self, stakeAccount):
+        self.activeStake -= stakeAccount['activeStake'] if stakeAccount.get('activeStake') else 0
+
     def createTickets(self):
-        amountInSol = (self.activeStake + self.rentExemptReserve) / 10**9
+        amountInSol = (self.activeStake + self.deactivatingStake + self.rentExemptReserve) / 10**9
         if self.staker not in POOLS and amountInSol >= 1:
             if amountInSol < TICKETS_CAP:
                 tickets = amountInSol
@@ -145,6 +148,7 @@ def getStakes():
             stakers[stake['staker']] = Staker(stake)
 
     # Add SolBlaze Stakers
+    SolBlazePool = "6WecYymEARvjG5ZyqkrVQ6YkhPfujNzWpSPwNKXHCbV2"
     try:
         headers = {'Content-Type': 'application/json'}
         r = requests.post("https://stake.solblaze.org/api/v1/cls_applied_validator_stake?validator=Luck3DN3HhkV6oc7rPQ1hYGgU3b5AhdKW9o1ob6AyU9", headers=headers)
@@ -154,9 +158,11 @@ def getStakes():
             bStaker['staker'] = key
             bStaker['activeStake'] = int(value * 10**9)
             if bStaker['staker'] in stakers:
-                stakers[bStaker['staker']].add_stake(stake)
+                stakers[bStaker['staker']].add_stake(bStaker)
+                stakers[SolBlazePool].remove_stake(bStaker) # prevent double counting
             else:
                 stakers[bStaker['staker']] = Staker(bStaker)
+                stakers[SolBlazePool].remove_stake(bStaker) # prevent double counting
     except:
         print('SolBlaze fetch error')
 
@@ -195,11 +201,12 @@ def getStats(epochInfo, stakers):
     slotsInEpoch = epochInfo['slotsInEpoch']
     firstSlot = absoluteSlot - slotIndex
     lastSlot = firstSlot + slotsInEpoch - 1
-    uniqueStakers = len(stakers)
+    uniqueStakers = 0
     sumActivatingStake = 0
     sumActiveStake = 0
     sumDeactivatingStake = 0
     for key, values in stakers.items():
+        uniqueStakers += 1 if values.activeStake + values.deactivatingStake > 0 else 0
         sumActivatingStake += values.activatingStake if values.activatingStake else 0
         sumActiveStake += values.activeStake if values.activeStake else 0
         sumDeactivatingStake += values.deactivatingStake if values.deactivatingStake else 0
