@@ -16,8 +16,8 @@ EPOCH_CAP = 12
 POOLS = ["6iQKfEyhr3bZMotVkW6beNZz5CPAkiwvgV2CTje9pVSS", # Jito
          "4bZ6o3eUUNXhKuqjdCnCoPAoLgWiuLYixKaxoa8PpiKk", # Marinade
          "mpa4abUkjQoAvPzREkh5Mo75hZhPFQ2FSH6w7dWKuQ5",  # Solana Foundation
-         "HbJTxftxnXgpePCshA8FubsRj9MW4kfPscfuUfn44fnt", #JPool
-         "6WecYymEARvjG5ZyqkrVQ6YkhPfujNzWpSPwNKXHCbV2", #BlazeStake
+         "HbJTxftxnXgpePCshA8FubsRj9MW4kfPscfuUfn44fnt", # JPool
+         "6WecYymEARvjG5ZyqkrVQ6YkhPfujNzWpSPwNKXHCbV2", # BlazeStake
         ]
 
 
