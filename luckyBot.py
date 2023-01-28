@@ -217,10 +217,11 @@ if __name__ == "__main__":
         try:
             epochInfo = getEpoch()
             epoch = epochInfo['epoch']
+            epochProgress = epochInfo['slotIndex'] / epochInfo['slotsInEpoch']
             epoch_stats = getFile("stats.json")
 
             # New Epoch ?
-            if epoch == int(epoch_stats[-1]['epoch']) + 1:
+            if epoch == int(epoch_stats[-1]['epoch']) + 1 and epochProgress > 0.005:
                 print('New Epoch', epoch)
 
                 # getStakes for new Epoch
@@ -276,7 +277,7 @@ if __name__ == "__main__":
                 # Copy to JSON-server
                 copyDB()
 
-            else:
+            else if epochProgress < 0.995:
                 #EPOCH EXIST
                 stakers = getStakes()
 
