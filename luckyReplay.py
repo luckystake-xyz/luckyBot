@@ -114,4 +114,5 @@ def getLucky(epoch):
     return luckyStaker
 
 if __name__ == "__main__":
+    # python3 luckyReplay.py <EPOCH>
     lucky = getLucky(int(sys.argv[1])) # REPLAY
