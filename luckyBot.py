@@ -8,7 +8,8 @@ import shlex
 
 RPC_URL = 'https://api.mainnet-beta.solana.com'
 VOTE_PUBKEY = 'Luck3DN3HhkV6oc7rPQ1hYGgU3b5AhdKW9o1ob6AyU9'
-COMMUNITY_WALLET = ''
+COMMUNITY_WALLET = 'PCSCgvw87oNz4S3d6YbjkNVd9YPY9ZRo2pdJQFFhiUB'
+TurkeyReliefDAO_WALLET = 'Fjo5AeFMbUD6gjoWKbVuMXRcPsjpXKksjKLxPFuXQhaK'
 
 TICKETS_CAP = 5000
 EPOCH_CAP = 12
@@ -184,7 +185,6 @@ def getLucky(epoch):
                 totalTickets += tickets
                 stakersWithTickets.append(value.__dict__)
     slotReward = getSlotReward(epoch)
-    print(slotReward, epoch)
     slotHash = getSlot(slotReward['slot'])['blockhash']
     random.seed(slotHash)
     lucky = random.randrange(0, totalTickets)
@@ -222,17 +222,15 @@ if __name__ == "__main__":
 
             # New Epoch ?
             if epoch == int(epoch_stats[-1]['epoch']) + 1 and epochProgress > 0.005:
-                print('New Epoch', epoch)
 
                 # getStakes for new Epoch
                 stakers = getStakes()
 
                 # Update stats
                 Newstats = getStats(epochInfo, stakers)
-                print(epoch_stats[-1]['epoch'])
+
                 # Draw lucky Staker
                 lucky = getLucky(epoch_stats[-1]['epoch'])
-
                 epoch_stats[-1]['lucky'] = lucky
 
                 # APY
@@ -250,6 +248,7 @@ if __name__ == "__main__":
                     apy = round(apy, 4)
                 else:
                     apy = 0
+
                 epoch_stats[-1]['apy'] = apy
                 epoch_stats.append(Newstats)
                 setFile("stats.json", epoch_stats)
@@ -264,8 +263,8 @@ if __name__ == "__main__":
                 epoch_stats = getFile("stats.json") # Update stats file
                 txid_1 = transferSol(epoch_stats[-2]['lucky']['staker'], epoch_stats[-2]['lucky']['lamport'], epoch_stats[-2]['lucky']['epoch'])
 
-                if int(epoch_stats[-2]['lucky']['epoch']) <= 410:
-                  txid_2 = burnBonk(epoch_stats[-2]['lucky']['lamport'], epoch_stats[-2]['lucky']['epoch'])
+                if int(epoch_stats[-2]['lucky']['epoch']) <= 417:
+                   txid_2 = transferSol(TurkeyReliefDAO_WALLET, epoch_stats[-2]['lucky']['lamport'], epoch_stats[-2]['lucky']['epoch'])
                 else:
                   txid_2 = transferSol(COMMUNITY_WALLET, epoch_stats[-2]['lucky']['lamport'], epoch_stats[-2]['lucky']['epoch'])
 
@@ -276,6 +275,7 @@ if __name__ == "__main__":
 
                 # Copy to JSON-server
                 copyDB()
+                break
 
             elif  epoch == int(epoch_stats[-1]['epoch']) and epochProgress < 0.995:
                 #EPOCH EXIST
@@ -294,6 +294,6 @@ if __name__ == "__main__":
 
                 copyDB()
             time.sleep(60*5)
-        except:
-            print('error')
+        except Exception as e:
+            print(e)
             time.sleep(15)
