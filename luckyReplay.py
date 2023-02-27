@@ -39,8 +39,10 @@ class Staker(object):
     def remove_stake(self, stakeAccount):
         self.activeStake -= stakeAccount['activeStake'] if stakeAccount.get('activeStake') else 0
 
-    def createTickets(self):
+    def createTickets(self, ticketCap):
         amountInSol = (self.activeStake + self.deactivatingStake + self.rentExemptReserve) / 10**9
+        if amountInSol >= ticketCap:
+            amountInSol = ticketCap
         if self.staker not in POOLS and amountInSol >= 1:
             if amountInSol < TICKETS_CAP:
                 tickets = amountInSol
@@ -91,21 +93,31 @@ def getLucky(epoch):
     totalStake = 0
     totalTickets = 0
     stakersWithTickets = []
+    stakerCurrentEpoch = {}
 
-    for i in range(epoch - EPOCH_CAP - 1, epoch + 1):
+    stakers = getFile('%s.json' % int(epoch + 1))
+    if stakers:
+        for value in stakers :
+            value = Staker(value)
+            stakerCurrentEpoch[value.staker]= int((value.activeStake + value.rentExemptReserve) / 10**9)
+
+    for i in range(epoch - EPOCH_CAP + 1, epoch + 1):
         stakers = getFile('%s.json' % i)
         if stakers:
             for value in stakers :
                 value = Staker(value)
-                tickets = value.createTickets()
-                totalStake += int((value.activeStake + value.rentExemptReserve) / 10**9)
-                totalTickets += tickets
-                stakersWithTickets.append(value.__dict__)
+                if value.staker in stakerCurrentEpoch:
+                    tickets = value.createTickets(stakerCurrentEpoch[value.staker])
+                    totalStake += int((value.activeStake + value.rentExemptReserve) / 10**9)
+                    totalTickets += tickets
+                    stakersWithTickets.append(value.__dict__)
     slotReward = getSlotReward(epoch)
-    print (json.dumps(stakersWithTickets,indent=4)) # REPLAY
+    #print (json.dumps(stakersWithTickets,indent=4)) # REPLAY
     slotHash = getSlot(slotReward['slot'])['blockhash']
     random.seed(slotHash)
     lucky = random.randrange(0, totalTickets)
+    while lucky == 0:
+        lucky = random.randrange(0, totalTickets)
 
     for value in stakersWithTickets :
         if value['tickets'][0] <= lucky and value['tickets'][1] >= lucky:
