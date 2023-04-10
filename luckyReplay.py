@@ -11,7 +11,10 @@ RPC_URL = 'https://api.mainnet-beta.solana.com'
 VOTE_PUBKEY = 'Luck3DN3HhkV6oc7rPQ1hYGgU3b5AhdKW9o1ob6AyU9'
 COMMUNITY_WALLET = ''
 
-TICKETS_CAP = 5000
+if int(sys.argv[1]) >= 418:
+    TICKETS_CAP = 1000
+else:
+    TICKETS_CAP = 5000
 EPOCH_CAP = 12
 
 POOLS = ["6iQKfEyhr3bZMotVkW6beNZz5CPAkiwvgV2CTje9pVSS", # Jito
@@ -95,13 +98,13 @@ def getLucky(epoch):
     stakersWithTickets = []
     stakerCurrentEpoch = {}
 
-    stakers = getFile('%s.json' % int(epoch + 1))
+    stakers = getFile('%s.json' % int(epoch))
     if stakers:
         for value in stakers :
             value = Staker(value)
             stakerCurrentEpoch[value.staker]= int((value.activeStake + value.rentExemptReserve) / 10**9)
 
-    for i in range(epoch - EPOCH_CAP + 1, epoch + 1):
+    for i in range(epoch - EPOCH_CAP + 1, epoch+1):
         stakers = getFile('%s.json' % i)
         if stakers:
             for value in stakers :

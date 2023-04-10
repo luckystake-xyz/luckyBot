@@ -8,10 +8,8 @@ import shlex
 
 RPC_URL = 'https://api.mainnet-beta.solana.com'
 VOTE_PUBKEY = 'Luck3DN3HhkV6oc7rPQ1hYGgU3b5AhdKW9o1ob6AyU9'
-COMMUNITY_WALLET = 'PCSCgvw87oNz4S3d6YbjkNVd9YPY9ZRo2pdJQFFhiUB'
-TurkeyReliefDAO_WALLET = 'Fjo5AeFMbUD6gjoWKbVuMXRcPsjpXKksjKLxPFuXQhaK'
 
-TICKETS_CAP = 5000
+TICKETS_CAP = 1000
 EPOCH_CAP = 12
 
 POOLS = ["6iQKfEyhr3bZMotVkW6beNZz5CPAkiwvgV2CTje9pVSS", # Jito
@@ -168,6 +166,7 @@ def getStakes():
                 stakers[SolBlazePool].remove_stake(bStaker) # prevent double counting
     except:
         print('SolBlaze fetch error')
+        return 0
 
     stakers = collections.OrderedDict(sorted(stakers.items()))
     return stakers
@@ -201,10 +200,10 @@ def getLucky(epoch):
     lucky = random.randrange(0, totalTickets)
     while lucky == 0:
         lucky = random.randrange(0, totalTickets)
-
+    print(epoch, slotHash, lucky, totalTickets) #DEBUG
     for value in stakersWithTickets :
         if value['tickets'][0] <= lucky and value['tickets'][1] >= lucky:
-            luckyStaker = {"epoch":epoch, "slotReward":slotReward['slot'], "totalReward":slotReward['rewardLamports'], "luckyTicket":lucky, "totalTickets":totalTickets, "lamport":int(slotReward['rewardLamports']/3),"staker":value['staker'],"luckyTx":"pending", "communityTx":"pending"}
+            luckyStaker = {"epoch":epoch, "slotReward":slotReward['slot'], "totalReward":slotReward['rewardLamports'], "luckyTicket":lucky, "totalTickets":totalTickets, "lamport":int(slotReward['rewardLamports']/2),"staker":value['staker'],"luckyTx":"pending", "communityTx":"deprecated"}
     return luckyStaker
 
 def getStats(epochInfo, stakers):
@@ -239,6 +238,9 @@ if __name__ == "__main__":
                 # getStakes for new Epoch
                 stakers = getStakes()
 
+                if not stakers:
+                    break
+
                 # Update stats
                 Newstats = getStats(epochInfo, stakers)
 
@@ -254,7 +256,7 @@ if __name__ == "__main__":
                     lastTime = getSlot(lastBlock)['blockTime']
                     slotTimeInSec = lastTime - firstTime
                     YearInSec = 31536000
-                    rewardsEpoch = epoch_stats[-1]['lucky']['totalReward'] * 100 / 6
+                    rewardsEpoch = epoch_stats[-1]['lucky']['totalReward'] * 100 / 4
                     N = slotTimeInSec / YearInSec
                     RATE = rewardsEpoch / epoch_stats[-1]['activeStake']
                     apy = RATE / N
@@ -276,23 +278,19 @@ if __name__ == "__main__":
                 epoch_stats = getFile("stats.json") # Update stats file
                 txid_1 = transferSol(epoch_stats[-2]['lucky']['staker'], epoch_stats[-2]['lucky']['lamport'], epoch_stats[-2]['lucky']['epoch'])
 
-                if int(epoch_stats[-2]['lucky']['epoch']) <= 417:
-                   txid_2 = transferSol(TurkeyReliefDAO_WALLET, epoch_stats[-2]['lucky']['lamport'], epoch_stats[-2]['lucky']['epoch'])
-                else:
-                  txid_2 = transferSol(COMMUNITY_WALLET, epoch_stats[-2]['lucky']['lamport'], epoch_stats[-2]['lucky']['epoch'])
-
                 # Log result
                 epoch_stats[-2]['lucky']['luckyTx'] = txid_1
-                epoch_stats[-2]['lucky']['communityTx'] = txid_2
                 setFile("stats.json", epoch_stats)
 
                 # Copy to JSON-server
                 copyDB()
-                break
 
             elif  epoch == int(epoch_stats[-1]['epoch']) and epochProgress < 0.998:
                 #EPOCH EXIST
                 stakers = getStakes()
+
+                if not stakers:
+                    break
 
                 """LOG ALL STAKERS"""
                 list = []
@@ -309,4 +307,5 @@ if __name__ == "__main__":
             time.sleep(60*5)
         except Exception as e:
             print(e)
-            time.sleep(15)
+            time.sleep(30)
+            break
