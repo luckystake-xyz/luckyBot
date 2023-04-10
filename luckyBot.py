@@ -132,6 +132,14 @@ def copyDB():
     stdout, stderr = process.communicate()
     return stdout
 
+def gitPush(epoch):
+    process = subprocess.Popen(shlex.split('/bin/bash /home/sol/luckyBot/gitPush.sh %s' % (epoch)),
+                        stdout=subprocess.PIPE,
+                        stderr=subprocess.PIPE)
+    stdout, stderr = process.communicate()
+    return stdout.decode('utf8')
+
+
 def getStakes():
     stakers = {}
     process = subprocess.Popen(shlex.split('solana stakes --url %s --output json %s' % (RPC_URL,VOTE_PUBKEY)),
@@ -200,7 +208,6 @@ def getLucky(epoch):
     lucky = random.randrange(0, totalTickets)
     while lucky == 0:
         lucky = random.randrange(0, totalTickets)
-    print(epoch, slotHash, lucky, totalTickets) #DEBUG
     for value in stakersWithTickets :
         if value['tickets'][0] <= lucky and value['tickets'][1] >= lucky:
             luckyStaker = {"epoch":epoch, "slotReward":slotReward['slot'], "totalReward":slotReward['rewardLamports'], "luckyTicket":lucky, "totalTickets":totalTickets, "lamport":int(slotReward['rewardLamports']/2),"staker":value['staker'],"luckyTx":"pending", "communityTx":"deprecated"}
@@ -284,6 +291,7 @@ if __name__ == "__main__":
 
                 # Copy to JSON-server
                 copyDB()
+                gitPush(epoch - 1)
 
             elif  epoch == int(epoch_stats[-1]['epoch']) and epochProgress < 0.998:
                 #EPOCH EXIST
@@ -304,6 +312,7 @@ if __name__ == "__main__":
                 setFile("stats.json", epoch_stats)
 
                 copyDB()
+                gitPush(epoch - 1) # Remove After Test
             time.sleep(60*5)
         except Exception as e:
             print(e)
