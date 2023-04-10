@@ -312,7 +312,6 @@ if __name__ == "__main__":
                 setFile("stats.json", epoch_stats)
 
                 copyDB()
-                gitPush(epoch - 1) # Remove After Test
             time.sleep(60*5)
         except Exception as e:
             print(e)
