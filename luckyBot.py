@@ -176,6 +176,27 @@ def getStakes():
         print('SolBlaze fetch error')
         return 0
 
+    # Add Marinade Stakers
+    MarinadePool = "4bZ6o3eUUNXhKuqjdCnCoPAoLgWiuLYixKaxoa8PpiKk"
+    try:
+        r = requests.get("https://snapshots-api.marinade.finance/v1/votes/msol/latest")
+        b = r.json()
+        for record in b['records']:
+            mStaker = {}
+            if record['validatorVoteAccount'] == VOTE_PUBKEY and record['amount']:
+                mStaker['staker'] = record['tokenOwner']
+                mStaker['activeStake'] = int(float(record['amount']) * 10**9)
+
+                if mStaker['staker'] in stakers:
+                    stakers[mStaker['staker']].add_stake(mStaker)
+                    stakers[MarinadePool].remove_stake(mStaker) # prevent double counting
+                else:
+                    stakers[mStaker['staker']] = Staker(mStaker)
+                    stakers[MarinadePool].remove_stake(mStaker) # prevent double counting
+    except:
+        print('Marinade fetch error')
+        return 0
+
     stakers = collections.OrderedDict(sorted(stakers.items()))
     return stakers
 
