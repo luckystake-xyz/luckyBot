@@ -179,13 +179,14 @@ def getStakes():
     # Add Marinade Stakers
     MarinadePool = "4bZ6o3eUUNXhKuqjdCnCoPAoLgWiuLYixKaxoa8PpiKk"
     try:
+        price = requests.get("https://api.marinade.finance/msol/price_sol").json()
         r = requests.get("https://snapshots-api.marinade.finance/v1/votes/msol/latest")
         b = r.json()
         for record in b['records']:
             mStaker = {}
             if record['validatorVoteAccount'] == VOTE_PUBKEY and record['amount']:
                 mStaker['staker'] = record['tokenOwner']
-                mStaker['activeStake'] = int(float(record['amount']) * 10**9)
+                mStaker['activeStake'] = int(float(record['amount']) * 10**9 * float(price))
 
                 if mStaker['staker'] in stakers:
                     stakers[mStaker['staker']].add_stake(mStaker)
