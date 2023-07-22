@@ -17,6 +17,7 @@ POOLS = ["6iQKfEyhr3bZMotVkW6beNZz5CPAkiwvgV2CTje9pVSS", # Jito
          "mpa4abUkjQoAvPzREkh5Mo75hZhPFQ2FSH6w7dWKuQ5",  # Solana Foundation
          "HbJTxftxnXgpePCshA8FubsRj9MW4kfPscfuUfn44fnt", # JPool
          "6WecYymEARvjG5ZyqkrVQ6YkhPfujNzWpSPwNKXHCbV2", # BlazeStake
+         "noMa7dN4cHQLV4ZonXrC29HTKFpxrpFbDLK5Gub8W8t",  # MarinadeNative
         ]
 
 
