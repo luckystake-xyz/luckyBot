@@ -187,7 +187,7 @@ def getStakes():
             mStaker = {}
             if record['validatorVoteAccount'] == VOTE_PUBKEY and record['amount']:
                 mStaker['staker'] = record['tokenOwner']
-                mStaker['activeStake'] = int(float(record['amount']) * 10**9 * float(price))
+                mStaker['activeStake'] = int(float(record['amount']) * 10**9 * float(price)) * 2 # x2 Marinade HappyBirthDay Event
 
                 if mStaker['staker'] in stakers:
                     stakers[mStaker['staker']].add_stake(mStaker)
