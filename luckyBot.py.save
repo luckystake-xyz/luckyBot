@@ -66,13 +66,11 @@ def getFile (filename):
     except:
         return False
 
-def setFile(filename, data1, data2=False, data3=False):
+def setFile(filename, data1, data2=False):
     result = {}
     result['result'] = data1
     if data2:
         result['tickets'] = data2
-    if data3:
-        result['boost'] = data3
     url = '/home/sol/luckyBot/snapshots/' + filename
     try:
         with open(url, "w") as epochfile:
@@ -136,25 +134,8 @@ def gitPush(epoch):
     stdout, stderr = process.communicate()
     return stdout.decode('utf8')
 
-def getBoost():
-    try:
-        headers = {'Content-Type': 'application/json'}
-        req = requests.post("https://stake.solblaze.org/api/v1/cls_boost", headers=headers)
-        bsolBoost = round(req.json()['boost']['conversion'], 2)
-    except:
-        bsolBoost = 1
-    try:
-        msol_directed_stake_sol = requests.get("https://api.marinade.finance/tlv").json()['msol_directed_stake_sol']
-        r = requests.get("https://snapshots-api.marinade.finance/v1/votes/msol/latest")
-        b = r.json()['records']
-        msol_directed_stake_sum = sum(float(d.get('amount', 0)) for d in b if d['amount'] != None)
-        msolBoost = round(msol_directed_stake_sol / msol_directed_stake_sum, 2)
-    except:
-        msolBoost = 1
-    # Soon! return {"msol": msolBoost, "bsol": bsolBoost, "native": 1}
-    return {"msol": 1, "bsol": 1, "native": 1}
 
-def getStakes(boost):
+def getStakes():
     stakers = {}
     process = subprocess.Popen(shlex.split('solana stakes --url %s --output json %s' % (RPC_URL,VOTE_PUBKEY)),
                         stdout=subprocess.PIPE, 
@@ -171,6 +152,10 @@ def getStakes(boost):
             stakers[stake['staker']] = Staker(stake)
 
     # Add SolBlaze Stakers
+    try:
+
+
+
     SolBlazePool = "6WecYymEARvjG5ZyqkrVQ6YkhPfujNzWpSPwNKXHCbV2"
     try:
         headers = {'Content-Type': 'application/json'}
@@ -179,7 +164,7 @@ def getStakes(boost):
         for key, value in b['applied_stakes'].items():
             bStaker = {}
             bStaker['staker'] = key
-            bStaker['activeStake'] = int(value * 10**9 * boost['bsol'])
+            bStaker['activeStake'] = int(value * 10**9)
             if bStaker['staker'] in stakers:
                 stakers[bStaker['staker']].add_stake(bStaker)
                 stakers[SolBlazePool].remove_stake(bStaker) # prevent double counting
@@ -200,7 +185,7 @@ def getStakes(boost):
             mStaker = {}
             if record['validatorVoteAccount'] == VOTE_PUBKEY and record['amount']:
                 mStaker['staker'] = record['tokenOwner']
-                mStaker['activeStake'] = int(float(record['amount']) * 10**9 * float(price) * boost['msol'])
+                mStaker['activeStake'] = int(float(record['amount']) * 10**9 * float(price))
 
                 if mStaker['staker'] in stakers:
                     stakers[mStaker['staker']].add_stake(mStaker)
@@ -241,7 +226,7 @@ def getTickets(epoch):
     return stakersWithTickets
 
 def getLucky(epoch, stakersWithTickets, ticketsStats):
-    totalTickets = sum(list(ticketsStats.values()))
+    totelTickets = sum(list(ticketsStats.values()))
     slotReward = getSlotReward(epoch)
     slotHash = getSlot(slotReward['slot'])['blockhash']
     random.seed(slotHash)
@@ -279,9 +264,7 @@ def getTicketsStats(stakersWithTickets):
                 tickets[item['staker']] += item['tickets'][1] - item['tickets'][0] + 1
             else:
                 tickets[item['staker']] = item['tickets'][1] - item['tickets'][0] + 1
-    sorted_tickets = sorted(tickets.items(), key=lambda x:x[1], reverse=True)
-    sorted_dict = dict(sorted_tickets)
-    return sorted_dict
+    return tickets
 
 if __name__ == "__main__":
     while True:
@@ -295,8 +278,7 @@ if __name__ == "__main__":
             if epoch == int(epoch_stats[-1]['epoch']) + 1 and epochProgress > 0.002:
 
                 # getStakes for new Epoch
-                boost = getBoost()
-                stakers = getStakes(boost)
+                stakers = getStakes()
 
                 if not stakers:
                     break
@@ -331,7 +313,7 @@ if __name__ == "__main__":
 
                 epoch_stats[-1]['apy'] = apy
                 epoch_stats.append(Newstats)
-                setFile("stats.json", epoch_stats, ticketsStats, boost)
+                setFile("stats.json", epoch_stats, ticketsStats)
 
                 ## Create new snapshot file
                 list = []
@@ -345,7 +327,7 @@ if __name__ == "__main__":
 
                 # Log result
                 epoch_stats[-2]['lucky']['luckyTx'] = txid_1
-                setFile("stats.json", epoch_stats, ticketsStats, boost)
+                setFile("stats.json", epoch_stats, ticketsStats)
 
                 # Copy to JSON-server
                 copyDB()
@@ -353,8 +335,7 @@ if __name__ == "__main__":
 
             elif  epoch == int(epoch_stats[-1]['epoch']) and epochProgress < 0.998:
                 #EPOCH EXIST
-                boost = getBoost()
-                stakers = getStakes(boost)
+                stakers = getStakes()
 
                 if not stakers:
                     break
@@ -373,7 +354,7 @@ if __name__ == "__main__":
                 setFile('%s.json' % epoch, list)
                 Newstats = getStats(epochInfo, stakers)
                 epoch_stats[-1] = Newstats
-                setFile("stats.json", epoch_stats, ticketsStats, boost)
+                setFile("stats.json", epoch_stats, ticketsStats)
 
                 copyDB()
             time.sleep(60*5)
