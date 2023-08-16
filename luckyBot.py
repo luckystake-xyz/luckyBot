@@ -151,8 +151,7 @@ def getBoost():
         msolBoost = round(msol_directed_stake_sol / msol_directed_stake_sum, 2)
     except:
         msolBoost = 1
-    # Soon! return {"msol": msolBoost, "bsol": bsolBoost, "native": 1}
-    return {"msol": 1, "bsol": 1, "native": 1}
+    return {"msol": msolBoost, "bsol": bsolBoost, "native": 1}
 
 def getStakes(boost):
     stakers = {}
