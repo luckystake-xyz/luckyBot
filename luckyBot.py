@@ -221,7 +221,6 @@ def getTickets(epoch):
     stakerCurrentEpoch = {}
 
     stakers = getFile('%s.json' % int(epoch))
-    print(epoch + 1)
     if stakers:
         for value in stakers :
             value = Staker(value)
@@ -284,14 +283,15 @@ def getTicketsStats(stakersWithTickets):
 
 if __name__ == "__main__":
     while True:
-        try:
+        if True: #try:
             epochInfo = getEpoch()
             epoch = epochInfo['epoch']
             epochProgress = epochInfo['slotIndex'] / epochInfo['slotsInEpoch']
             epoch_stats = getFile("stats.json")
-
+            print(epoch, epochProgress, epoch_stats) ###
             # New Epoch ?
             if epoch == int(epoch_stats[-1]['epoch']) + 1 and epochProgress > 0.002:
+                print(epoch)
 
                 # getStakes for new Epoch
                 boost = getBoost()
@@ -340,6 +340,7 @@ if __name__ == "__main__":
 
                 #### TRANSFERT TO WINNER
                 epoch_stats = getFile("stats.json") # Update stats file
+                print(epoch_stats)
                 txid_1 = transferSol(epoch_stats[-2]['lucky']['staker'], epoch_stats[-2]['lucky']['lamport'], epoch_stats[-2]['lucky']['epoch'])
 
                 # Log result
@@ -376,7 +377,7 @@ if __name__ == "__main__":
 
                 copyDB()
             time.sleep(60*5)
-        except Exception as e:
-            print(e)
-            time.sleep(30)
-            break
+        #except Exception as e:
+        #    print(e)
+        #    time.sleep(30)
+        #    break
