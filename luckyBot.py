@@ -288,7 +288,7 @@ if __name__ == "__main__":
             epoch = epochInfo['epoch']
             epochProgress = epochInfo['slotIndex'] / epochInfo['slotsInEpoch']
             epoch_stats = getFile("stats.json")
-            print(epoch, epochProgress, epoch_stats) ###
+
             # New Epoch ?
             if epoch == int(epoch_stats[-1]['epoch']) + 1 and epochProgress > 0.002:
                 print(epoch)
@@ -298,6 +298,7 @@ if __name__ == "__main__":
                 stakers = getStakes(boost)
 
                 if not stakers:
+                    print('No stakers, break')
                     break
 
                 # Update stats
@@ -340,7 +341,7 @@ if __name__ == "__main__":
 
                 #### TRANSFERT TO WINNER
                 epoch_stats = getFile("stats.json") # Update stats file
-                print(epoch_stats)
+                print(epoch_stats[-2]['lucky'])
                 txid_1 = transferSol(epoch_stats[-2]['lucky']['staker'], epoch_stats[-2]['lucky']['lamport'], epoch_stats[-2]['lucky']['epoch'])
 
                 # Log result
