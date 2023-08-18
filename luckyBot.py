@@ -283,7 +283,7 @@ def getTicketsStats(stakersWithTickets):
 
 if __name__ == "__main__":
     while True:
-        if True: #try:
+        try:
             epochInfo = getEpoch()
             epoch = epochInfo['epoch']
             epochProgress = epochInfo['slotIndex'] / epochInfo['slotsInEpoch']
@@ -378,7 +378,7 @@ if __name__ == "__main__":
 
                 copyDB()
             time.sleep(60*5)
-        #except Exception as e:
-        #    print(e)
-        #    time.sleep(30)
-        #    break
+        except Exception as e:
+            print(e)
+            time.sleep(30)
+            break
