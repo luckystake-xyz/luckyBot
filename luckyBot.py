@@ -148,7 +148,7 @@ def getBoost():
         r = requests.get("https://snapshots-api.marinade.finance/v1/votes/msol/latest")
         b = r.json()['records']
         msol_directed_stake_sum = sum(float(d.get('amount', 0)) for d in b if d['amount'] != None)
-        msolBoost = round(msol_directed_stake_sol / msol_directed_stake_sum, 2)
+        msolBoost = round(msol_directed_stake_sol / (msol_directed_stake_sum), 2)
     except:
         msolBoost = 1
     return {"msol": msolBoost, "bsol": bsolBoost, "native": 1}
