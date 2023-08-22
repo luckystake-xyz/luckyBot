@@ -140,18 +140,30 @@ def getBoost():
     try:
         headers = {'Content-Type': 'application/json'}
         req = requests.post("https://stake.solblaze.org/api/v1/cls_boost", headers=headers)
-        bsolBoost = round(req.json()['boost']['conversion'], 2)
+        bsolBoost = req.json()['boost']['conversion']
     except:
         bsolBoost = 1
     try:
-        msol_directed_stake_sol = requests.get("https://api.marinade.finance/tlv").json()['msol_directed_stake_sol']
-        r = requests.get("https://snapshots-api.marinade.finance/v1/votes/msol/latest")
-        b = r.json()['records']
-        msol_directed_stake_sum = sum(float(d.get('amount', 0)) for d in b if d['amount'] != None)
-        msolBoost = round(msol_directed_stake_sol / (msol_directed_stake_sum), 2)
+        msol_tvl = requests.get("https://api.marinade.finance/tlv").json()
+        price = requests.get("https://api.marinade.finance/msol/price_sol").json()
+        msolBoost = (msol_tvl['total_sol'] * 0.2) / ( msol_tvl['msol_directed_stake_msol'] * price)
     except:
         msolBoost = 1
-    return {"msol": msolBoost, "bsol": bsolBoost, "native": 1}
+    try:
+        v = requests.get("https://snapshots-api.marinade.finance/v1/votes/vemnde/latest").json()['records']
+        ve_directed_stake_sum = sum(float(d.get('amount', 0)) for d in v if d['amount'] != None)
+        ve_directed_LS = sum(float(d.get('amount', 0)) for d in v if d['amount'] != None and d['validatorVoteAccount'] == "Luck3DN3HhkV6oc7rPQ1hYGgU3b5AhdKW9o1ob6AyU9" )
+        ratio = ( msol_tvl['total_sol'] * 0.2 / ve_directed_stake_sum )
+        if ve_directed_LS * ratio <= msol_tvl['total_sol'] * 0.2 * 0.1:
+            veMndeBoost = ratio
+            veMndeMaxCap = False
+        else:
+            veMndeBoost = msol_tvl['total_sol'] * 0.2 * 0.1 / ve_directed_LS
+            veMndeMaxCap = True
+    except:
+        veMndeBoost = 0
+        veMndeMaxCap = False
+    return {"msol": msolBoost, "bsol": bsolBoost, "native": 1, "veMnde": veMndeBoost, "veMndeMaxCap": veMndeMaxCap}
 
 def getStakes(boost):
     stakers = {}
@@ -209,6 +221,23 @@ def getStakes(boost):
                     stakers[MarinadePool].remove_stake(mStaker) # prevent double counting
     except:
         print('Marinade fetch error')
+        return 0
+
+    # Add veMNDE Stakers
+    try:
+        r = requests.get("https://snapshots-api.marinade.finance/v1/votes/vemnde/latest").json()['records']
+        for record in r:
+            vmStaker = {}
+            if record['validatorVoteAccount'] == VOTE_PUBKEY and record['amount']:
+                vmStaker['staker'] = record['tokenOwner']
+                vmStaker['activeStake'] = int(float(record['amount']) * boost['veMnde'])
+
+                if vmStaker['staker'] in stakers:
+                    stakers[vmStaker['staker']].add_stake(vmStaker)
+                else:
+                    stakers[vmStaker['staker']] = Staker(vmStaker)
+    except:
+        print('veMnde fetch error')
         return 0
 
     stakers = collections.OrderedDict(sorted(stakers.items()))
