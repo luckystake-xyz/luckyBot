@@ -230,12 +230,14 @@ def getStakes(boost):
             vmStaker = {}
             if record['validatorVoteAccount'] == VOTE_PUBKEY and record['amount']:
                 vmStaker['staker'] = record['tokenOwner']
-                vmStaker['activeStake'] = int(float(record['amount']) * boost['veMnde'])
+                vmStaker['activeStake'] = int(float(record['amount']) * boost['veMnde'] * 10**9)
 
                 if vmStaker['staker'] in stakers:
                     stakers[vmStaker['staker']].add_stake(vmStaker)
+                    stakers[MarinadePool].remove_stake(vmStaker) # prevent double counting
                 else:
                     stakers[vmStaker['staker']] = Staker(vmStaker)
+                    stakers[MarinadePool].remove_stake(vmStaker) # prevent double counting
     except:
         print('veMnde fetch error')
         return 0
@@ -345,7 +347,8 @@ if __name__ == "__main__":
                 # APY
                 if len(epoch_stats[-2]['lucky'])>2:
                     firstBlock = epoch_stats[-2]['lucky']['slotReward']
-                    lastBlock = epoch_stats[-1]['lastSlot']
+                    slotReward = getSlotReward(epoch_stats[-1]['epoch'])
+                    lastBlock  = getSlot(slotReward['slot'])['parentSlot']
                     firstTime = getSlot(firstBlock)['blockTime']
                     lastTime = getSlot(lastBlock)['blockTime']
                     slotTimeInSec = lastTime - firstTime
